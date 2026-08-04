@@ -7,7 +7,8 @@ defmodule CryptoDataPipeline.MixProject do
       version: "0.1.0",
       elixir: "~> 1.20",
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      releases: releases()
     ]
   end
 
@@ -19,6 +20,15 @@ defmodule CryptoDataPipeline.MixProject do
     ]
   end
 
+  defp releases do
+    [
+      crypto_data_pipeline: [
+        include_erts: true,
+        steps: [:assemble, :tar]
+      ]
+    ]
+  end
+
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
@@ -27,7 +37,8 @@ defmodule CryptoDataPipeline.MixProject do
       {:websockex, "~> 0.4"},
       {:req, "~> 0.6"},
       {:dotenv, "~> 3.1"},
-      {:mox, "~> 1.2", only: :test}
+      {:mox, "~> 1.2", only: :test},
+      {:distillery, "~> 2.0"}
     ]
   end
 end

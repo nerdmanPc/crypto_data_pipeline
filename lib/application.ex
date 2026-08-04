@@ -3,7 +3,7 @@ defmodule CryptoDataPipeline.Application do
 
   @impl true
   def start(_type, _args) do
-    children = [{DataPipeline, %{}}]
+    children = [{CryptoDataPipeline, %{}}]
 
     Supervisor.start_link(children, strategy: :one_for_one)
   end

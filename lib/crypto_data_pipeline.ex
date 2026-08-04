@@ -1,5 +1,5 @@
 defmodule CryptoDataPipeline do
-  #require Logger
+  require Logger
   use GenServer
 
   def start_link(initial_state \\ %{}) do
@@ -32,25 +32,25 @@ defmodule CryptoDataPipeline do
 
   def handle_cast({:trades_snapshot, trade_data}, state) do
     # Process the trade data here
-    #IO.inspect(trade_data, label: "Received trade snapshot data")
+    Logger.debug("Received trade snapshot data: #{inspect(trade_data)}")
     {:noreply, state}
   end
 
   def handle_cast({:trades_update, trade_data}, state) do
     # Process the trade data here
-    #IO.inspect(trade_data, label: "Received trade update data")
+    Logger.debug("Received trade update data: #{inspect(trade_data)}")
     {:noreply, state}
   end
 
   def handle_cast({:order_book_snapshot, order_data}, state) do
     # Process the order data here
-    #IO.inspect(order_data, label: "Received order snapshot data")
+    Logger.debug("Received order snapshot data: #{inspect(order_data)}")
     {:noreply, state}
   end
 
   def handle_cast({:order_book_update, order_data}, state) do
     # Process the order data here
-    #IO.inspect(order_data, label: "Received order update data")
+    Logger.debug("Received order update data: #{inspect(order_data)}")
     {:noreply, state}
   end
 end

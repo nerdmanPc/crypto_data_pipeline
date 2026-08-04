@@ -2,7 +2,7 @@ defmodule Kraken.Auth do
   require Logger
 
   @spec get_token(String.t(), String.t()) :: {:ok, String.t()} | {:error, any()}
-  def get_token(api_key, api_secret) do
+  def get_token(api_key, api_secret) when is_binary(api_key) and is_binary(api_secret) do
     endpoint = "https://api.kraken.com"
     url_path = "/0/private/GetWebSocketsToken"
     payload = %{"nonce" => System.system_time(:millisecond)}

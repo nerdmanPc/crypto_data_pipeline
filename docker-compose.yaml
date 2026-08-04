@@ -1,0 +1,6 @@
+services:
+  app:
+    image: crypto_data_pipeline
+    environment:
+      KRAKEN_API_KEY: ${KRAKEN_API_KEY}
+      KRAKEN_API_SECRET: ${KRAKEN_API_SECRET}
