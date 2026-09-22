@@ -12,8 +12,8 @@ ENV MIX_ENV=prod
 # By convention, /opt is typically used for applications
 WORKDIR /app
 
-# Install build dependencies
-RUN apk add --no-cache build-base git
+# Install build dependencies (add PostgreSQL build libs for Postgrex)
+RUN apk add --no-cache build-base git postgresql-dev openssl-dev
 
 # Install Hex and Rebar
 RUN mix local.hex --force && \
@@ -37,22 +37,24 @@ FROM alpine:${ALPINE_VERSION} AS runner
 ARG APP_NAME=crypto_data_pipeline
 
 # Install runtime dependencies (libstdc++ and ncurses are required by Erlang)
-RUN apk add --no-cache libstdc++ openssl ncurses-libs tini
+# Include postgresql-libs so the runtime has libpq for Postgres connections
+RUN apk add --no-cache libstdc++ openssl ncurses-libs tini postgresql-libs
 
 # Set runtime environment
 ENV MIX_ENV=prod APP_NAME=${APP_NAME} LANG=C.UTF-8
 WORKDIR /app
 
 # Create a non-root user for security
-RUN adduser -D elixiruser
-USER elixiruser
+RUN adduser -D ${APP_NAME}
+USER ${APP_NAME}
 
 # Copy the built release from the builder stage
 # Replace 'my_app' with your actual Elixir application name
-COPY --from=builder --chown=elixiruser:elixiruser /app/_build/prod/rel/${APP_NAME} ./
+COPY --from=builder --chown=${APP_NAME}:${APP_NAME} /app/_build/prod/rel/${APP_NAME} ./
 
 # Use tini to handle OS signals correctly
 ENTRYPOINT ["/sbin/tini", "--"]
 
 # Start the application
+# bin/$APP_NAME eval MyApp.Release.migrate && 
 CMD ["/bin/sh", "-lc", "/app/bin/$APP_NAME start"]

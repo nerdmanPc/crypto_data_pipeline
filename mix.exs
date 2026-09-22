@@ -15,7 +15,7 @@ defmodule CryptoDataPipeline.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      mod: {CryptoDataPipeline.Application, []},
+      mod: {CryptoDataPipeline, []},
       extra_applications: [:logger]
     ]
   end
@@ -32,13 +32,14 @@ defmodule CryptoDataPipeline.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      {:ecto_sql, "~> 3.14"},
+      {:postgrex, "~> 0.22.4"},
       {:jason, "~> 1.4"},
       {:decimal, "~> 3.1"},
       {:websockex, "~> 0.4"},
-      {:req, "~> 0.6"},
+      {:req, "~> 0.7.4"},
       {:dotenv, "~> 3.1"},
-      {:mox, "~> 1.2", only: :test},
-      {:distillery, "~> 2.0"}
+      {:mox, "~> 1.2", only: :test}
     ]
   end
 end

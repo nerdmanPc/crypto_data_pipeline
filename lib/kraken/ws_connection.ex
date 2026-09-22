@@ -4,14 +4,19 @@ defmodule Kraken.WsConnection do
 
   def start_link(state) do
     state = state |> Map.put(:last_pong, System.system_time(:second))
-    ws_url = if state.channel == :orders, do: "wss://ws-l3.kraken.com/v2", else: "wss://ws.kraken.com/v2"
-    #name = String.to_atom("kraken_ws_#{state.channel}_#{:erlang.unique_integer([:positive])}")
+
+    ws_url =
+      if state.channel == :orders, do: "wss://ws-l3.kraken.com/v2", else: "wss://ws.kraken.com/v2"
+
+    # name = String.to_atom("kraken_ws_#{state.channel}_#{:erlang.unique_integer([:positive])}")
     start_response = WebSockex.start_link(ws_url, __MODULE__, state)
+
     case start_response do
       {:ok, pid} ->
         Logger.info("Kraken - Data stream started successfully.")
         :timer.send_interval(30_000, pid, :send_ping)
         {:ok, pid}
+
       {:error, reason} ->
         Logger.error("Kraken - Failed to start data stream: #{inspect(reason)}")
         {:error, reason}
@@ -32,6 +37,7 @@ defmodule Kraken.WsConnection do
 
   def handle_info(:send_ping, state) do
     age = System.system_time(:second) - state.last_pong
+
     if age > 40 do
       Logger.warning("Kraken - Data stream ping timeout: #{age}s")
       {:close, state}
@@ -49,7 +55,6 @@ defmodule Kraken.WsConnection do
   end
 
   def handle_cast({:subscribe, :trades, symbols}, state) when is_list(symbols) do
-
     subscription_msg = %{
       "method" => "subscribe",
       "params" => %{
@@ -58,91 +63,98 @@ defmodule Kraken.WsConnection do
         "snapshot" => true
       }
     }
+
     subscription_msg = Jason.encode!(subscription_msg)
-    #Logger.debug("Subscribe message:\n#{subscription_msg}")
+    # Logger.debug("Subscribe message:\n#{subscription_msg}")
 
     {:reply, {:text, subscription_msg}, state}
   end
 
   def handle_cast({:subscribe, :orders, symbols}, state) when is_list(symbols) do
-
     subscription_msg = %{
       "method" => "subscribe",
       "params" => %{
         "channel" => "level3",
         "symbol" => symbols,
         "snapshot" => true,
-        "token" => state.api_token,
-        #"depth" => depth
+        "token" => state.api_token
+        # "depth" => depth
       }
     }
+
     subscription_msg = Jason.encode!(subscription_msg)
-    #Logger.debug("Subscribe message:\n#{subscription_msg}")
+    # Logger.debug("Subscribe message:\n#{subscription_msg}")
 
     {:reply, {:text, subscription_msg}, state}
   end
 
   def handle_cast({:unsubscribe, :trades, symbols}, state) when is_list(symbols) do
-
     subscription_msg = %{
       "method" => "unsubscribe",
       "params" => %{
         "channel" => "trade",
-        "symbol" => symbols,
+        "symbol" => symbols
       }
     }
+
     subscription_msg = Jason.encode!(subscription_msg)
 
     {:reply, {:text, subscription_msg}, state}
   end
 
   def handle_cast({:unsubscribe, :orders, symbols}, state) when is_list(symbols) do
-
     subscription_msg = %{
       "method" => "unsubscribe",
       "params" => %{
         "channel" => "level3",
         "symbol" => symbols,
-        "token" => state.api_token,
-        #"depth" => depth
+        "token" => state.api_token
+        # "depth" => depth
       }
     }
+
     subscription_msg = Jason.encode!(subscription_msg)
 
     {:reply, {:text, subscription_msg}, state}
   end
 
   def handle_frame({:text, msg}, state) do
-    case Jason.decode(msg) do
+    case Jason.decode(msg, floats: :decimals, keys: :atoms) do
       {:ok, decoded_msg} ->
         case decoded_msg do
-          %{"channel" => "trade", "type" => "snapshot", "data" => trades} ->
-            #Logger.debug("Kraken - Received trade snapshot:\n#{inspect(trades)}")
+          %{channel: "trade", type: "snapshot", data: trades} ->
+            # Logger.debug("Kraken - Received trade snapshot:\n#{inspect(trades)}")
             GenServer.cast(state.destination, {:trades_snapshot, trades})
-            #processed_trades = trades |> Enum.map(&process_trade(&1))
-            #broadcast(state.registry, {:trades, :snapshot, state.pair}, processed_trades)
+            # processed_trades = trades |> Enum.map(&process_trade(&1))
+            # broadcast(state.registry, {:trades, :snapshot, state.pair}, processed_trades)
             {:ok, state}
-          %{"channel" => "trade", "type" => "update", "data" => trades} ->
-            #Logger.debug("Kraken - Received trade update:\n#{inspect(trades)}")
+
+          %{channel: "trade", type: "update", data: trades} ->
+            # Logger.debug("Kraken - Received trade update:\n#{inspect(trades)}")
             GenServer.cast(state.destination, {:trades_update, trades})
-            #processed_trades = trades |> Enum.map(&process_trade(&1))
-            #broadcast(state.registry, {:trades, :update, state.pair}, processed_trades)
+            # processed_trades = trades |> Enum.map(&process_trade(&1))
+            # broadcast(state.registry, {:trades, :update, state.pair}, processed_trades)
             {:ok, state}
-          %{"channel" => "level3", "type" => "snapshot", "data" => order_book} ->
-            #Logger.debug("Kraken - Received order book snapshot:\n#{inspect(order_book)}")
+
+          %{channel: "level3", type: "snapshot", data: order_book} ->
+            # Logger.debug("Kraken - Received order book snapshot:\n#{inspect(order_book)}")
             GenServer.cast(state.destination, {:order_book_snapshot, order_book})
-            #broadcast(state.registry, {:orders, :snapshot, state.pair}, order_book)
+            # broadcast(state.registry, {:orders, :snapshot, state.pair}, order_book)
             {:ok, state}
-          %{"channel" => "level3", "type" => "update", "data" => order_book} ->
-            #Logger.debug("Kraken - Received order book update:\n#{inspect(order_book)}")
+
+          %{channel: "level3", type: "update", data: order_book} ->
+            # Logger.debug("Kraken - Received order book update:\n#{inspect(order_book)}")
             GenServer.cast(state.destination, {:order_book_update, order_book})
             {:ok, state}
-          %{"channel" => "heartbeat"} ->
+
+          %{channel: "heartbeat"} ->
             {:ok, state}
+
           _ ->
             Logger.warning("Ignored message:\n#{inspect(decoded_msg)}")
             {:ok, state}
         end
+
       {:error, reason} ->
         Logger.error("Kraken - Failed to decode message:\n#{inspect(reason)}")
         {:error, reason}
