@@ -40,26 +40,61 @@ defmodule CryptoDataPipeline.MainServer do
   end
 
   def handle_cast({:trades_snapshot, trade_data}, state) do
-    # Process the trade data here
-    Logger.debug("Received trade snapshot data: #{inspect(trade_data)}")
+    trades = trade_data |> Enum.map(&trade_from_kraken_to_ecto/1)
+    CryptoDataPipeline.Repo.insert_all(Kraken.Trade, trades, on_conflict: :nothing)
     {:noreply, state}
   end
 
   def handle_cast({:trades_update, trade_data}, state) do
-    # Process the trade data here
-    Logger.debug("Received trade update data: #{inspect(trade_data)}")
+    trades = trade_data |> Enum.map(&trade_from_kraken_to_ecto/1)
+    CryptoDataPipeline.Repo.insert_all(Kraken.Trade, trades, on_conflict: :nothing)
     {:noreply, state}
   end
 
   def handle_cast({:order_book_snapshot, order_data}, state) do
-    # Process the order data here
-    Logger.debug("Received order snapshot data: #{inspect(order_data)}")
+    orders = order_data |> Stream.map(&item_from_kraken_to_ecto/1) |> Stream.concat() |> Enum.to_list()
+    Logger.debug("Inserting order book snapshot: #{inspect(orders)}")
+    CryptoDataPipeline.Repo.insert_all(Kraken.OrderUpdate, orders, on_conflict: :nothing)
     {:noreply, state}
   end
 
   def handle_cast({:order_book_update, order_data}, state) do
-    # Process the order data here
-    Logger.debug("Received order update data: #{inspect(order_data)}")
+    orders = order_data |> Stream.map(&item_from_kraken_to_ecto/1) |> Stream.concat() |> Enum.to_list()
+    Logger.debug("Inserting order book update: #{inspect(orders)}")
+    CryptoDataPipeline.Repo.insert_all(Kraken.OrderUpdate, orders, on_conflict: :nothing)
     {:noreply, state}
+  end
+
+  defp trade_from_kraken_to_ecto(trade) do
+    %{
+      trade_id: trade.trade_id,
+      symbol_pair: trade.symbol,
+      timestamp: DateTime.from_iso8601(trade.timestamp) |> elem(1),
+      side: String.to_existing_atom(trade.side),
+      quantity: trade.qty,
+      price: trade.price,
+      taker_order_type: String.to_existing_atom(trade.ord_type)
+    }
+  end
+
+  defp item_from_kraken_to_ecto(item) do
+    symbol_pair = item.symbol
+    bids = item.bids |> Stream.map(&order_from_kraken_to_ecto(&1, symbol_pair, :buy))
+    asks = item.asks |> Stream.map(&order_from_kraken_to_ecto(&1, symbol_pair, :sell))
+    Stream.concat(bids, asks)
+  end
+
+  defp order_from_kraken_to_ecto(order, symbol_pair, side) do
+    event_type = Map.get(order, :event, "snapshot")
+    event_type = String.to_existing_atom(event_type)
+    %{
+      order_id: order.order_id,
+      event_type: event_type,
+      symbol_pair: symbol_pair,
+      timestamp: DateTime.from_iso8601(order.timestamp) |> elem(1),
+      maker_side: side,
+      quantity: order.order_qty,
+      price: order.limit_price
+    }
   end
 end
