@@ -2,6 +2,7 @@ services:
   app:
     image: crypto_data_pipeline
     environment:
+      SYMBOL_PAIRS: ${SYMBOL_PAIRS}
       KRAKEN_API_KEY: ${KRAKEN_API_KEY}
       KRAKEN_API_SECRET: ${KRAKEN_API_SECRET}
       # Postgres/TimescaleDB connection (used by Ecto)

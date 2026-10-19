@@ -11,7 +11,7 @@ defmodule CryptoDataPipeline.MainServer do
     Dotenv.load()
 
     init_arg = %{
-      symbols: ["BTC/USD", "ETH/USD"],
+      symbols: System.get_env("SYMBOL_PAIRS") |> String.split(","),
       api_key: System.get_env("KRAKEN_API_KEY"),
       api_secret: System.get_env("KRAKEN_API_SECRET")
     }
