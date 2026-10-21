@@ -1,6 +1,8 @@
 services:
   app:
-    build: .
+    build:
+      context: .
+      target: runner
     environment:
       SYMBOL_PAIRS: ${SYMBOL_PAIRS}
       KRAKEN_API_KEY: ${KRAKEN_API_KEY}
@@ -17,6 +19,7 @@ services:
   # helper service to run mix tasks (uses official Elixir image and mounts the project)
   mix:
     build:
+      context: .
       target: builder
     environment:
       POSTGRES_HOST: timescaledb
