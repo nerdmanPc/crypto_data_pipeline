@@ -6,12 +6,12 @@ defmodule CryptoDataPipeline.Repo.Migrations.CreateKrakenOrders do
       add :order_id, :string, primary_key: true
       add :symbol_pair, :string, primary_key: true
       add :event_type, :string
-      add :timestamp, :utc_datetime_usec, primary_key: true
+      add :timestamp, :utc_datetime_usec
       add :maker_side, :string
       add :quantity, :decimal
       add :price, :decimal
     end
 
-    execute("SELECT create_hypertable('kraken_order_updates', 'timestamp')")
+    execute("SELECT create_hypertable('kraken_order_updates', by_range('timestamp'))")
   end
 end
