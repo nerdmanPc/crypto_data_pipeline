@@ -1,6 +1,6 @@
 services:
   app:
-    image: crypto_data_pipeline
+    build: .
     environment:
       SYMBOL_PAIRS: ${SYMBOL_PAIRS}
       KRAKEN_API_KEY: ${KRAKEN_API_KEY}
@@ -16,10 +16,8 @@ services:
 
   # helper service to run mix tasks (uses official Elixir image and mounts the project)
   mix:
-    image: elixir:1.20-alpine
-    working_dir: /app
-    volumes:
-      - ./:/app
+    build:
+      target: builder
     environment:
       POSTGRES_HOST: timescaledb
       POSTGRES_USER: crypto_data_pipeline

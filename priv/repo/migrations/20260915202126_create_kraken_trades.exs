@@ -5,7 +5,7 @@ defmodule CryptoDataPipeline.Repo.Migrations.CreateKrakenTrades do
     create table("kraken_trades", primary_key: false) do
       add :trade_id, :integer, primary_key: true
       add :symbol_pair, :string, primary_key: true
-      add :timestamp, :utc_datetime_usec
+      add :timestamp, :utc_datetime_usec, primary_key: true
       add :side, :string
       add :quantity, :decimal
       add :price, :decimal

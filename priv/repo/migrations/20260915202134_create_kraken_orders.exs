@@ -6,7 +6,7 @@ defmodule CryptoDataPipeline.Repo.Migrations.CreateKrakenOrders do
       add :order_id, :string, primary_key: true
       add :symbol_pair, :string, primary_key: true
       add :event_type, :string
-      add :timestamp, :utc_datetime_usec
+      add :timestamp, :utc_datetime_usec, primary_key: true
       add :maker_side, :string
       add :quantity, :decimal
       add :price, :decimal

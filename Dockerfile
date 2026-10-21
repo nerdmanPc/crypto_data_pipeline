@@ -24,6 +24,9 @@ COPY mix.exs mix.lock ./
 RUN mix deps.get --only $MIX_ENV
 RUN mix deps.compile
 
+# Copy ecto migrations
+COPY priv priv
+
 # Copy source code and build the release
 COPY config config
 COPY lib lib
