@@ -9,8 +9,6 @@ defmodule CryptoDataPipeline do
       {CryptoDataPipeline.MainServer, %{}}
     ]
 
-    #Logger.debug("Postgres Password: #{System.get_env("POSTGRES_PASSWORD")}")
-
     Supervisor.start_link(children, strategy: :one_for_one)
   end
 end

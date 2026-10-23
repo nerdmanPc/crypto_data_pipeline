@@ -65,7 +65,6 @@ defmodule Kraken.WsConnection do
     }
 
     subscription_msg = Jason.encode!(subscription_msg)
-    # Logger.debug("Subscribe message:\n#{subscription_msg}")
 
     {:reply, {:text, subscription_msg}, state}
   end
@@ -83,7 +82,6 @@ defmodule Kraken.WsConnection do
     }
 
     subscription_msg = Jason.encode!(subscription_msg)
-    # Logger.debug("Subscribe message:\n#{subscription_msg}")
 
     {:reply, {:text, subscription_msg}, state}
   end
@@ -123,27 +121,23 @@ defmodule Kraken.WsConnection do
       {:ok, decoded_msg} ->
         case decoded_msg do
           %{channel: "trade", type: "snapshot", data: trades} ->
-            # Logger.debug("Kraken - Received trade snapshot:\n#{inspect(trades)}")
             GenServer.cast(state.destination, {:trades_snapshot, trades})
             # processed_trades = trades |> Enum.map(&process_trade(&1))
             # broadcast(state.registry, {:trades, :snapshot, state.pair}, processed_trades)
             {:ok, state}
 
           %{channel: "trade", type: "update", data: trades} ->
-            # Logger.debug("Kraken - Received trade update:\n#{inspect(trades)}")
             GenServer.cast(state.destination, {:trades_update, trades})
             # processed_trades = trades |> Enum.map(&process_trade(&1))
             # broadcast(state.registry, {:trades, :update, state.pair}, processed_trades)
             {:ok, state}
 
           %{channel: "level3", type: "snapshot", data: order_book} ->
-            # Logger.debug("Kraken - Received order book snapshot:\n#{inspect(order_book)}")
             GenServer.cast(state.destination, {:order_book_snapshot, order_book})
             # broadcast(state.registry, {:orders, :snapshot, state.pair}, order_book)
             {:ok, state}
 
           %{channel: "level3", type: "update", data: order_book} ->
-            # Logger.debug("Kraken - Received order book update:\n#{inspect(order_book)}")
             GenServer.cast(state.destination, {:order_book_update, order_book})
             {:ok, state}
 

@@ -7,7 +7,6 @@ defmodule CryptoDataPipeline.MainServer do
   end
 
   def init(_init_arg) do
-    # Logger.debug("Initializing Datapipeline, args: #{inspect(init_arg)}")
     Dotenv.load()
 
     init_arg = %{
@@ -17,7 +16,6 @@ defmodule CryptoDataPipeline.MainServer do
     }
 
     {:ok, api_token} = Kraken.Auth.get_token(init_arg.api_key, init_arg.api_secret)
-    # Logger.debug("Kraken - Retrieved API token: #{inspect(api_token)}")
     trades_conn_args = init_arg |> Map.put(:channel, :trades) |> Map.put(:destination, self())
 
     orders_conn_args =
@@ -53,14 +51,12 @@ defmodule CryptoDataPipeline.MainServer do
 
   def handle_cast({:order_book_snapshot, order_data}, state) do
     orders = order_data |> Stream.map(&item_from_kraken_to_ecto/1) |> Stream.concat() |> Enum.to_list()
-    Logger.debug("Inserting order book snapshot: #{inspect(orders)}")
     CryptoDataPipeline.Repo.insert_all(Kraken.OrderUpdate, orders, on_conflict: :nothing)
     {:noreply, state}
   end
 
   def handle_cast({:order_book_update, order_data}, state) do
     orders = order_data |> Stream.map(&item_from_kraken_to_ecto/1) |> Stream.concat() |> Enum.to_list()
-    Logger.debug("Inserting order book update: #{inspect(orders)}")
     CryptoDataPipeline.Repo.insert_all(Kraken.OrderUpdate, orders, on_conflict: :nothing)
     {:noreply, state}
   end
