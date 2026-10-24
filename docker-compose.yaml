@@ -32,7 +32,7 @@ services:
   timescaledb:
     #stdin_open: true
     #tty: true
-    image: timescale/timescaledb:latest-pg14
+    image: timescale/timescaledb:latest-pg18
     container_name: timescaledb
     environment:
       POSTGRES_DB: crypto_data_repository
