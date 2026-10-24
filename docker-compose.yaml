@@ -41,7 +41,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - timescale-data:/var/lib/postgresql/data
+      - timescale-data:/var/lib/postgresql
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U crypto_data_pipeline -d crypto_data_repository"]
