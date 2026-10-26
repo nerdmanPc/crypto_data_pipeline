@@ -15,6 +15,7 @@ services:
       POSTGRES_DB: crypto_data_repository
     depends_on:
       - timescaledb
+     restart: on-failure
 
   # helper service to run mix tasks (uses official Elixir image and mounts the project)
   mix:
