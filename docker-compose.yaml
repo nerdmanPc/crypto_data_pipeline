@@ -3,6 +3,9 @@ services:
     build:
       context: .
       target: runner
+    ports:
+      - "4369:4369"  # Porta do EPMD
+      - "9001:9001"  # Porta de Distribuição que fixamos
     environment:
       SYMBOL_PAIRS: ${SYMBOL_PAIRS}
       KRAKEN_API_KEY: ${KRAKEN_API_KEY}
@@ -13,6 +16,9 @@ services:
       POSTGRES_USER: crypto_data_pipeline
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: crypto_data_repository
+      RELEASE_COOKIE: ${RELEASE_COOKIE}
+      RELEASE_DISTRIBUTION: crypto_data_pipeline
+      RELEASE_NODE: app@127.0.0.1
     depends_on:
       - timescaledb
     restart: on-failure
@@ -27,6 +33,9 @@ services:
       POSTGRES_USER: crypto_data_pipeline
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: crypto_data_repository
+      RELEASE_COOKIE: ${RELEASE_COOKIE}
+      RELEASE_DISTRIBUTION: crypto_data_pipeline
+      RELEASE_NODE: app@127.0.0.1
     depends_on:
       - timescaledb
 
