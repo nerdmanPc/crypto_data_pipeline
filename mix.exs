@@ -35,11 +35,13 @@ defmodule CryptoDataPipeline.MixProject do
       {:ecto_sql, "~> 3.14"},
       {:postgrex, "~> 0.22.4"},
       {:jason, "~> 1.4"},
-      {:decimal, "~> 3.1"},
+      {:decimal, "~> 3.2"},
       {:websockex, "~> 0.4"},
-      {:req, "~> 0.7.4"},
+      {:req, "~> 0.7"},
       {:dotenv, "~> 3.1"},
-      {:mox, "~> 1.2", only: :test}
+      {:mox, "~> 1.2", only: :test},
+      {:observer_web, "~> 0.2.0"},
+      {:igniter, "~> 0.8", only: [:dev]}
     ]
   end
 end
