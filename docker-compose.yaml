@@ -10,8 +10,6 @@ services:
       SYMBOL_PAIRS: ${SYMBOL_PAIRS}
       KRAKEN_API_KEY: ${KRAKEN_API_KEY}
       KRAKEN_API_SECRET: ${KRAKEN_API_SECRET}
-      # Postgres/TimescaleDB connection (used by Ecto)
-      #DATABASE_URL: "postgres://crypto_data_pipeline:${PGPASSWORD}@timescaledb:5432/crypto_data_repository"
       POSTGRES_HOST: timescaledb
       POSTGRES_USER: crypto_data_pipeline
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -19,6 +17,7 @@ services:
       RELEASE_COOKIE: ${RELEASE_COOKIE}
       RELEASE_DISTRIBUTION: name
       RELEASE_NODE: app@127.0.0.1
+      ELIXIR_ERL_OPTIONS: "-kernel inet_dist_listen_min 9001 inet_dist_listen_max 9001"
     depends_on:
       - timescaledb
     restart: on-failure
@@ -34,8 +33,6 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: crypto_data_repository
       RELEASE_COOKIE: ${RELEASE_COOKIE}
-      RELEASE_DISTRIBUTION: name
-      RELEASE_NODE: app@127.0.0.1
     depends_on:
       - timescaledb
 

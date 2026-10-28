@@ -27,6 +27,9 @@ RUN mix deps.compile
 # Copy ecto migrations
 COPY priv priv
 
+# Copy the release configuration
+COPY rel rel
+
 # Copy source code and build the release
 COPY config config
 COPY lib lib

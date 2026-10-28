@@ -22,5 +22,8 @@ erl_crash.dump
 # Ignore package tarball (built via "mix hex.build").
 crypto_data_pipeline-*.tar
 
+# Ignore the .env file that contains environment variables.
 .env
 
+# Ignore the .tool-versions file that contains ASDF configuration.
+.tool-versions
