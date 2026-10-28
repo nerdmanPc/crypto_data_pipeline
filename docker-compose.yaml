@@ -17,7 +17,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: crypto_data_repository
       RELEASE_COOKIE: ${RELEASE_COOKIE}
-      RELEASE_DISTRIBUTION: name
+      RELEASE_DISTRIBUTION: crypto_data_pipeline
       RELEASE_NODE: app@127.0.0.1
     depends_on:
       - timescaledb
@@ -34,7 +34,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: crypto_data_repository
       RELEASE_COOKIE: ${RELEASE_COOKIE}
-      RELEASE_DISTRIBUTION: name
+      RELEASE_DISTRIBUTION: crypto_data_pipeline
       RELEASE_NODE: app@127.0.0.1
     depends_on:
       - timescaledb
