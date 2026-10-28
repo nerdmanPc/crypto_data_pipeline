@@ -40,6 +40,7 @@ defmodule CryptoDataPipeline.MixProject do
       {:req, "~> 0.7"},
       {:dotenv, "~> 3.1"},
       {:mox, "~> 1.2", only: :test},
+      {:observer_web, "~> 0.2.0"},
       {:igniter, "~> 0.8", only: [:dev]}
     ]
   end
