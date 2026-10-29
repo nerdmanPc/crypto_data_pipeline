@@ -49,13 +49,13 @@ defmodule CryptoDataPipeline.MainServer do
   end
 
   def handle_cast({:order_book_snapshot, order_data}, state) do
-    orders = order_data |> Stream.map(&item_from_kraken_to_ecto/1) |> Stream.concat() |> Enum.to_list()
+    orders = order_data |> Stream.map(&item_from_kraken_to_ecto/1) |> Enum.concat()
     CryptoDataPipeline.Repo.insert_all(Kraken.OrderUpdate, orders, on_conflict: :nothing)
     {:noreply, state}
   end
 
   def handle_cast({:order_book_update, order_data}, state) do
-    orders = order_data |> Stream.map(&item_from_kraken_to_ecto/1) |> Stream.concat() |> Enum.to_list()
+    orders = order_data |> Stream.map(&item_from_kraken_to_ecto/1) |> Enum.concat()
     CryptoDataPipeline.Repo.insert_all(Kraken.OrderUpdate, orders, on_conflict: :nothing)
     {:noreply, state}
   end
@@ -82,11 +82,12 @@ defmodule CryptoDataPipeline.MainServer do
   defp order_from_kraken_to_ecto(order, symbol_pair, side) do
     event_type = Map.get(order, :event, "snapshot")
     event_type = String.to_existing_atom(event_type)
+    timestamp = DateTime.from_iso8601(order.timestamp) |> elem(1)
     %{
       order_id: order.order_id,
       event_type: event_type,
       symbol_pair: symbol_pair,
-      timestamp: DateTime.from_iso8601(order.timestamp) |> elem(1),
+      timestamp: timestamp,
       maker_side: side,
       quantity: order.order_qty,
       price: order.limit_price
