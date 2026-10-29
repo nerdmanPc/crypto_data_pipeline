@@ -9,7 +9,7 @@ defmodule Kraken.WsConnection do
       if state.channel == :orders, do: "wss://ws-l3.kraken.com/v2", else: "wss://ws.kraken.com/v2"
 
     # name = String.to_atom("kraken_ws_#{state.channel}_#{:erlang.unique_integer([:positive])}")
-    start_response = WebSockex.start_link(ws_url, __MODULE__, state, name: String.to_atom("kraken_ws_#{state.channel}_#{:erlang.unique_integer([:positive])}"))
+    start_response = WebSockex.start_link(ws_url, __MODULE__, state, name: state.process_name)
 
     case start_response do
       {:ok, pid} ->

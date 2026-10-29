@@ -1,39 +1,12 @@
-defmodule CryptoDataPipeline.MainServer do
+defmodule CryptoDataPipeline.DataProcessor do
   use GenServer
 
-  def start_link(initial_state \\ %{}) do
-    GenServer.start_link(__MODULE__, initial_state, name: __MODULE__)
+  def start_link(initial_state) do
+    GenServer.start_link(__MODULE__, initial_state, name: initial_state.process_name)
   end
 
-  def init(_init_arg) do
-    Dotenv.load()
-
-    init_arg = %{
-      symbols: System.get_env("SYMBOL_PAIRS") |> String.split(","),
-      api_key: System.get_env("KRAKEN_API_KEY"),
-      api_secret: System.get_env("KRAKEN_API_SECRET")
-    }
-
-    {:ok, api_token} = Kraken.Auth.get_token(init_arg.api_key, init_arg.api_secret)
-    trades_conn_args = init_arg |> Map.put(:channel, :trades) |> Map.put(:destination, self())
-
-    orders_conn_args =
-      init_arg
-      |> Map.put(:channel, :orders)
-      |> Map.put(:api_token, api_token)
-      |> Map.put(:destination, self())
-
-    # Start a supervisor for websocket connections
-    {:ok, ws_supervisor} =
-      Supervisor.start_link(
-        [
-          Supervisor.child_spec({Kraken.WsConnection, trades_conn_args}, id: :trades_conn),
-          Supervisor.child_spec({Kraken.WsConnection, orders_conn_args}, id: :orders_conn)
-        ],
-        strategy: :one_for_one
-      )
-
-    {:ok, init_arg |> Map.merge(%{ws_supervisor: ws_supervisor})}
+  def init(init_arg) do
+    {:ok, init_arg}
   end
 
   def handle_cast({:trades_snapshot, trade_data}, state) do
