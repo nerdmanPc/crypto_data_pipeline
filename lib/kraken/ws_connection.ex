@@ -9,7 +9,7 @@ defmodule Kraken.WsConnection do
       if state.channel == :orders, do: "wss://ws-l3.kraken.com/v2", else: "wss://ws.kraken.com/v2"
 
     # name = String.to_atom("kraken_ws_#{state.channel}_#{:erlang.unique_integer([:positive])}")
-    start_response = WebSockex.start_link(ws_url, __MODULE__, state)
+    start_response = WebSockex.start_link(ws_url, __MODULE__, state, name: String.to_atom("kraken_ws_#{state.channel}_#{:erlang.unique_integer([:positive])}"))
 
     case start_response do
       {:ok, pid} ->
@@ -117,6 +117,8 @@ defmodule Kraken.WsConnection do
   end
 
   def handle_frame({:text, msg}, state) do
+    #[memory: mem, message_queue_len: q_len] = Process.info(self(), [:memory, :message_queue_len])
+    #:telemetry.execute([:kraken, :ws_connection, :message_received], %{memory: mem, message_queue_len: q_len}, %{channel: state.channel})
     case Jason.decode(msg, floats: :decimals, keys: :atoms) do
       {:ok, decoded_msg} ->
         case decoded_msg do

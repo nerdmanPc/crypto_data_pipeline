@@ -1,9 +1,8 @@
 defmodule CryptoDataPipeline.MainServer do
-  require Logger
   use GenServer
 
   def start_link(initial_state \\ %{}) do
-    GenServer.start_link(__MODULE__, initial_state)
+    GenServer.start_link(__MODULE__, initial_state, name: __MODULE__)
   end
 
   def init(_init_arg) do
