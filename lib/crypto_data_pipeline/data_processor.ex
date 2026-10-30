@@ -23,13 +23,17 @@ defmodule CryptoDataPipeline.DataProcessor do
 
   def handle_cast({:order_book_snapshot, order_data}, state) do
     orders = order_data |> Stream.map(&item_from_kraken_to_ecto/1) |> Enum.concat()
-    CryptoDataPipeline.Repo.insert_all(Kraken.OrderUpdate, orders, on_conflict: :nothing)
+    Task.start(fn ->
+      CryptoDataPipeline.Repo.insert_all(Kraken.OrderUpdate, orders, on_conflict: :nothing)
+    end)
     {:noreply, state}
   end
 
   def handle_cast({:order_book_update, order_data}, state) do
     orders = order_data |> Stream.map(&item_from_kraken_to_ecto/1) |> Enum.concat()
-    CryptoDataPipeline.Repo.insert_all(Kraken.OrderUpdate, orders, on_conflict: :nothing)
+    Task.start(fn ->
+      CryptoDataPipeline.Repo.insert_all(Kraken.OrderUpdate, orders, on_conflict: :nothing)
+    end)
     {:noreply, state}
   end
 
