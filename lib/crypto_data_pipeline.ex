@@ -1,6 +1,6 @@
 defmodule CryptoDataPipeline do
   use Application
-  #require Logger
+  require Logger
 
   @impl true
   def start(_type, _args) do
@@ -12,42 +12,45 @@ defmodule CryptoDataPipeline do
     )
     config = load_env_config()
     api_token = get_api_token(config.kraken_api_key, config.kraken_api_secret)
-    trades_processor_args = %{
-      symbols: config.symbol_pairs,
-      channel: :trades,
-      process_name: :trades_processor
-    }
-    trades_connection_args = %{
-      symbols: config.symbol_pairs,
-      channel: :trades,
-      destination: :trades_processor,
-      process_name: :trades_connection,
-      api_token: api_token,
-    }
     children = [
       CryptoDataPipeline.Repo,
       CryptoDataPipeline.Monitor,
-      Supervisor.child_spec({CryptoDataPipeline.DataProcessor, trades_processor_args}, id: trades_processor_args.process_name),
-      Supervisor.child_spec({Kraken.WsConnection, trades_connection_args}, id: trades_connection_args.process_name),
     ]
-    order_pipelines = Enum.flat_map(config.symbol_pairs, fn symbol_pair ->
-      processor_args = order_processor_args(symbol_pair)
-      connection_args = order_connection_args(symbol_pair, api_token, processor_args.process_name)
+    trade_pipelines = get_pipeline_group(config.trade_symbol_pairs, api_token, :trades)
+    order_pipelines = get_pipeline_group(config.order_symbol_pairs, api_token, :orders)
+    children = children ++ order_pipelines ++ trade_pipelines
+    Supervisor.start_link(children, strategy: :one_for_one)
+  end
+
+  defp get_pipeline_group(symbol_pairs, api_token, channel) do
+    Enum.flat_map(symbol_pairs, fn symbol_pair ->
+      processor_args = processor_args(channel, symbol_pair)
+      connection_args = connection_args(channel, symbol_pair, api_token, processor_args.process_name)
       [
         Supervisor.child_spec({CryptoDataPipeline.DataProcessor, processor_args}, id: processor_args.process_name),
         Supervisor.child_spec({Kraken.WsConnection, connection_args}, id: connection_args.process_name)
       ]
     end)
-    children = children ++ order_pipelines
-    Supervisor.start_link(children, strategy: :one_for_one)
   end
 
   defp load_env_config do
-    Dotenv.load()
-    kraken_api_key = System.get_env("KRAKEN_API_KEY")
-    kraken_api_secret = System.get_env("KRAKEN_API_SECRET")
-    symbol_pairs = System.get_env("SYMBOL_PAIRS") |> String.split(",")
-    %{kraken_api_key: kraken_api_key, kraken_api_secret: kraken_api_secret, symbol_pairs: symbol_pairs}
+    kraken_api_key = get_env_variable("KRAKEN_API_KEY")
+    kraken_api_secret = get_env_variable("KRAKEN_API_SECRET")
+    trade_symbol_pairs = get_env_variable("TRADE_SYMBOL_PAIRS") |> String.split(",")
+    order_symbol_pairs = get_env_variable("ORDER_SYMBOL_PAIRS") |> String.split(",")
+    %{
+      kraken_api_key: kraken_api_key,
+      kraken_api_secret: kraken_api_secret,
+      trade_symbol_pairs: trade_symbol_pairs,
+      order_symbol_pairs: order_symbol_pairs
+    }
+  end
+
+  defp get_env_variable(var_name) do
+    case System.get_env(var_name) do
+      nil -> raise "Environment variable '#{var_name}' is not set"
+      value -> value
+    end
   end
 
   defp get_api_token(api_key, api_secret) do
@@ -57,24 +60,24 @@ defmodule CryptoDataPipeline do
     end
   end
 
-  defp order_connection_args(symbol_pair, api_token, processor_name) do
+  defp connection_args(channel, symbol_pair, api_token, processor_name) do
     formatted_symbol_pair = String.replace(symbol_pair, "/", "_")
-    connection_name = String.to_atom("orders_connection_#{formatted_symbol_pair}")
+    connection_name = String.to_atom("#{channel}_connection_#{formatted_symbol_pair}")
     %{
         symbols: [symbol_pair],
-        channel: :orders,
+        channel: channel,
         api_token: api_token,
         destination: processor_name,
         process_name: connection_name,
       }
   end
 
-  defp order_processor_args(symbol_pair) do
+  defp processor_args(channel, symbol_pair) do
     formatted_symbol_pair = String.replace(symbol_pair, "/", "_")
-    processor_name = String.to_atom("orders_processor_#{formatted_symbol_pair}")
+    processor_name = String.to_atom("#{channel}_processor_#{formatted_symbol_pair}")
     %{
         symbols: [symbol_pair],
-        channel: :orders,
+        channel: channel,
         process_name: processor_name
       }
   end
