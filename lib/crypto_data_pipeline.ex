@@ -1,6 +1,6 @@
 defmodule CryptoDataPipeline do
   use Application
-  require Logger
+  #require Logger
 
   @impl true
   def start(_type, _args) do

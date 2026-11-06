@@ -41,7 +41,7 @@ services:
       POSTGRES_USER: crypto_data_pipeline
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - timescale-data:/var/lib/postgresql
     restart: unless-stopped
