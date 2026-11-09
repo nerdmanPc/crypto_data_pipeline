@@ -3,9 +3,9 @@ defmodule Kraken.Trade do
 
   @primary_key false
   schema "kraken_trades" do
-    field :trade_id, :integer, primary_key: true
+    field :timestamp, :utc_datetime_usec, primary_key: true
     field :symbol_pair, :string, primary_key: true
-    field :timestamp, :utc_datetime_usec
+    field :trade_id, :integer, primary_key: true
     field :side, Ecto.Enum, values: [:buy, :sell]
     field :quantity, :decimal
     field :price, :decimal

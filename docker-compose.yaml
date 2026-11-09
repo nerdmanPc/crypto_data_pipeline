@@ -43,7 +43,7 @@ services:
     ports:
       - "127.0.0.1:5432:5432"
     volumes:
-      - timescale-data:/var/lib/postgresql
+      - timescale_data:/var/lib/postgresql
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U crypto_data_pipeline -d crypto_data_repository"]
@@ -52,5 +52,5 @@ services:
       retries: 5
 
 volumes:
-  timescale-data:
+  timescale_data:
     driver: local
