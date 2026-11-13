@@ -6,7 +6,7 @@ defmodule CryptoDataPipeline do
   def start(_type, _args) do
     :telemetry.attach(
       "queue_monitor",
-      [:crypto_data_pipeline, :monitor, :message_queue_lengths],
+      [:monitor, :message_queue_lengths],
       &CryptoDataPipeline.Telemetry.handle_telemetry/4,
       nil
     )
@@ -48,7 +48,8 @@ defmodule CryptoDataPipeline do
 
   defp get_env_variable(var_name) do
     case System.get_env(var_name) do
-      nil -> raise "Environment variable '#{var_name}' is not set"
+      nil ->
+        raise "Environment variable '#{var_name}' is not set"
       value -> value
     end
   end

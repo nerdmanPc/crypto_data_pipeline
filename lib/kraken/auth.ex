@@ -25,7 +25,7 @@ defmodule Kraken.Auth do
     end
   rescue
     e ->
-      Logger.error("Kraken.Auth.get_token failed: #{inspect(e)}")
+      Logger.error("Kraken.Auth.get_token failed: #{inspect(e, pretty: true)}")
       {:error, e}
   end
 

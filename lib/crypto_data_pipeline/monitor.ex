@@ -34,11 +34,11 @@ defmodule CryptoDataPipeline.Monitor do
       Process.list()
       |> Stream.map(&process_snapshot/1)
       |> Stream.reject(&is_nil/1)
-      |> Stream.filter(&(&1.message_queue_len > 1))
+      |> Stream.filter(&(&1.message_queue_len > 32))
       |> Enum.sort_by(& &1.message_queue_len, :desc)
 
     :telemetry.execute(
-      [:crypto_data_pipeline, :monitor, :message_queue_lengths],
+      [:monitor, :message_queue_lengths],
       %{processes: processes},
       %{interval_ms: @default_interval_ms}
     )

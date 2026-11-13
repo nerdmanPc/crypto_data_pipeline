@@ -18,7 +18,7 @@ defmodule Kraken.WsConnection do
         {:ok, pid}
 
       {:error, reason} ->
-        Logger.error("Kraken - Failed to start data stream: #{inspect(reason)}")
+        Logger.error("Kraken - Failed to start data stream: #{inspect(reason, pretty: true)}")
         {:error, reason}
     end
   end
@@ -27,7 +27,7 @@ defmodule Kraken.WsConnection do
     channel = Map.get(state, :channel)
     symbols = Map.get(state, :symbols, [])
 
-    Logger.info("Kraken - Connected. Subscribing to #{channel} stream for #{inspect(symbols)}")
+    Logger.info("Kraken - Connected. Subscribing to #{channel} stream for #{inspect(symbols, pretty: true)}")
 
     # Send subscription immediately upon connection
     WebSockex.cast(self(), {:subscribe, channel, symbols})
@@ -143,23 +143,39 @@ defmodule Kraken.WsConnection do
             GenServer.cast(state.destination, {:order_book_update, order_book})
             {:ok, state}
 
+          %{error: error} ->
+            Logger.error("Kraken - Error received:\n#{inspect(error, pretty: true)}")
+            {:ok, state}
+
+          %{channel: "status", type: "update", data: status} ->
+            Logger.debug("Kraken - Status update received:\n#{inspect(status, pretty: true)}")
+            {:ok, state}
+
+          %{method: "subscribe", success: true, result: result} ->
+            Logger.info("Kraken - Subscription successful:\n#{inspect(result, pretty: true)}")
+            {:ok, state}
+
           %{channel: "heartbeat"} ->
             {:ok, state}
 
           _ ->
-            Logger.warning("Ignored message:\n#{inspect(decoded_msg)}")
+            Logger.warning("Ignored message:\n#{inspect(decoded_msg, pretty: true)}")
             {:ok, state}
         end
 
       {:error, reason} ->
-        Logger.error("Kraken - Failed to decode message:\n#{inspect(reason)}")
+        Logger.error("Kraken - Failed to decode message:\n#{inspect(reason, pretty: true)}")
         {:error, reason}
     end
   end
 
   def terminate(close_reason, state) do
-    Logger.warning("Kraken - Data stream terminated with reason:\n#{inspect(close_reason)}")
-    Logger.warning("Kraken - Data stream status:\n#{inspect(state)}")
+    details = %{
+      reason: close_reason,
+      channel: Map.get(state, :channel),
+      symbols: Map.get(state, :symbols, [])
+    }
+    Logger.warning("Kraken - Data stream terminated:\n#{inspect(details, pretty: true)}")
     {:ok, state}
   end
 end
