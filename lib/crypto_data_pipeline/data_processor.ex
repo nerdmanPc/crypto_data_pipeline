@@ -83,7 +83,7 @@ defmodule CryptoDataPipeline.DataProcessor do
       trade_id: trade.trade_id,
       symbol_pair: trade.symbol,
       timestamp: DateTime.from_iso8601(trade.timestamp) |> elem(1),
-      side: String.to_existing_atom(trade.side),
+      taker_side: String.to_existing_atom(trade.side),
       quantity: trade.qty,
       price: trade.price,
       taker_order_type: String.to_existing_atom(trade.ord_type),
