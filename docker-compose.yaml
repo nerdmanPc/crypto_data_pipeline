@@ -16,13 +16,15 @@ services:
       POSTGRES_DB: crypto_data_repository
     depends_on:
       - timescaledb
-    restart: on-failure
+    restart: on-failure:3
 
   # helper service to run mix tasks (uses official Elixir image and mounts the project)
   mix:
     build:
       context: .
       target: builder
+      args:
+        - ELIXIR_ENV=${ELIXIR_ENV}
     environment:
       POSTGRES_HOST: timescaledb
       POSTGRES_USER: crypto_data_pipeline

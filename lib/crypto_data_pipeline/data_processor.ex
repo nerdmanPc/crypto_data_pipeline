@@ -16,19 +16,23 @@ defmodule CryptoDataPipeline.DataProcessor do
   end
 
   def handle_cast({:trades_snapshot, trade_data}, state) do
-    {:noreply, add_to_buffer(state, build_trade_rows(trade_data))}
+    msg_timestamp = DateTime.utc_now(:microsecond)
+    {:noreply, add_to_buffer(state, build_trade_rows(trade_data, msg_timestamp))}
   end
 
   def handle_cast({:trades_update, trade_data}, state) do
-    {:noreply, add_to_buffer(state, build_trade_rows(trade_data))}
+    msg_timestamp = DateTime.utc_now(:microsecond)
+    {:noreply, add_to_buffer(state, build_trade_rows(trade_data, msg_timestamp))}
   end
 
   def handle_cast({:order_book_snapshot, order_data}, state) do
-    {:noreply, add_to_buffer(state, build_order_rows(order_data))}
+    msg_timestamp = DateTime.utc_now(:microsecond)
+    {:noreply, add_to_buffer(state, build_order_rows(order_data, msg_timestamp))}
   end
 
   def handle_cast({:order_book_update, order_data}, state) do
-    {:noreply, add_to_buffer(state, build_order_rows(order_data))}
+    msg_timestamp = DateTime.utc_now(:microsecond)
+    {:noreply, add_to_buffer(state, build_order_rows(order_data, msg_timestamp))}
   end
 
   def handle_info(:flush_buffer, state) do
@@ -49,13 +53,13 @@ defmodule CryptoDataPipeline.DataProcessor do
     Map.update(state, :buffer, rows, &(&1 ++ rows))
   end
 
-  defp build_trade_rows(trade_data) do
-    Enum.map(trade_data, &trade_from_kraken_to_ecto/1)
+  defp build_trade_rows(trade_data, msg_timestamp) do
+    Enum.map(trade_data, &trade_from_kraken_to_ecto(&1, msg_timestamp))
   end
 
-  defp build_order_rows(order_data) do
+  defp build_order_rows(order_data, msg_timestamp) do
     order_data
-    |> Stream.map(&item_from_kraken_to_ecto/1)
+    |> Stream.map(&item_from_kraken_to_ecto(&1, msg_timestamp))
     |> Enum.concat()
     |> Enum.to_list()
   end
@@ -64,10 +68,8 @@ defmodule CryptoDataPipeline.DataProcessor do
     case state.channel do
       :trades ->
         CryptoDataPipeline.Repo.insert_all(Kraken.Trade, rows, on_conflict: :nothing)
-
       :orders ->
         CryptoDataPipeline.Repo.insert_all(Kraken.OrderUpdate, rows, on_conflict: :nothing)
-
       _ ->
         :ok
     end
@@ -76,7 +78,7 @@ defmodule CryptoDataPipeline.DataProcessor do
     Map.put(state, :buffer, [])
   end
 
-  defp trade_from_kraken_to_ecto(trade) do
+  defp trade_from_kraken_to_ecto(trade, msg_timestamp) do
     %{
       trade_id: trade.trade_id,
       symbol_pair: trade.symbol,
@@ -84,18 +86,20 @@ defmodule CryptoDataPipeline.DataProcessor do
       side: String.to_existing_atom(trade.side),
       quantity: trade.qty,
       price: trade.price,
-      taker_order_type: String.to_existing_atom(trade.ord_type)
+      taker_order_type: String.to_existing_atom(trade.ord_type),
+      msg_timestamp: msg_timestamp,
     }
   end
 
-  defp item_from_kraken_to_ecto(item) do
+  defp item_from_kraken_to_ecto(item, msg_timestamp) do
     symbol_pair = item.symbol
-    bids = item.bids |> Stream.map(&order_from_kraken_to_ecto(&1, symbol_pair, :buy))
-    asks = item.asks |> Stream.map(&order_from_kraken_to_ecto(&1, symbol_pair, :sell))
+    event_timestamp = DateTime.from_iso8601(item.timestamp) |> elem(1)
+    bids = item.bids |> Stream.map(&order_from_kraken_to_ecto(&1, symbol_pair, :buy, msg_timestamp, event_timestamp))
+    asks = item.asks |> Stream.map(&order_from_kraken_to_ecto(&1, symbol_pair, :sell, msg_timestamp, event_timestamp))
     Stream.concat(bids, asks) |> Enum.to_list()
   end
 
-  defp order_from_kraken_to_ecto(order, symbol_pair, side) do
+  defp order_from_kraken_to_ecto(order, symbol_pair, side, msg_timestamp, event_timestamp) do
     event_type = Map.get(order, :event, "snapshot")
     event_type = String.to_existing_atom(event_type)
     timestamp = DateTime.from_iso8601(order.timestamp) |> elem(1)
@@ -104,10 +108,12 @@ defmodule CryptoDataPipeline.DataProcessor do
       order_id: order.order_id,
       event_type: event_type,
       symbol_pair: symbol_pair,
-      timestamp: timestamp,
+      order_timestamp: timestamp,
       maker_side: side,
       quantity: order.order_qty,
-      price: order.limit_price
+      price: order.limit_price,
+      msg_timestamp: msg_timestamp,
+      event_timestamp: event_timestamp,
     }
   end
 end

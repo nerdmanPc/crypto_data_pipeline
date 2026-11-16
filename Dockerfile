@@ -38,13 +38,14 @@ RUN mix release
 FROM alpine:${ALPINE_VERSION} AS runner
 
 ARG APP_NAME=crypto_data_pipeline
+ARG ELIXIR_ENV=prod
 
 # Install runtime dependencies (libstdc++ and ncurses are required by Erlang)
 # Include postgresql-libs and libpq-related packages so the runtime can connect to Postgres/TimescaleDB
 RUN apk add --no-cache libstdc++ openssl ncurses-libs tini postgresql-libs postgresql-client lksctp-tools
 
 # Set runtime environment
-ENV MIX_ENV=prod APP_NAME=${APP_NAME} LANG=C.UTF-8
+ENV MIX_ENV=${ELIXIR_ENV} APP_NAME=${APP_NAME} LANG=C.UTF-8
 WORKDIR /app
 
 # Create a non-root user for security

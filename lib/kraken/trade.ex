@@ -10,5 +10,6 @@ defmodule Kraken.Trade do
     field :quantity, :decimal
     field :price, :decimal
     field :taker_order_type, Ecto.Enum, values: [:market, :limit]
+    field :msg_timestamp, :utc_datetime_usec
   end
 end
